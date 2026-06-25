@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Prompt Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3349;
+    --accent: #6c63ff;
+    --accent2: #a78bfa;
+    --accent-glow: rgba(108,99,255,0.18);
+    --text: #e8eaf0;
+    --text-muted: #8b92b0;
+    --text-dim: #555e7a;
+    --green: #22c55e;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Sarabun', 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  body.lang-en { font-family: 'Inter', 'Sarabun', sans-serif; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #13152a 0%, #1a1d33 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 20px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%; transform: translateX(-50%);
+    width: 500px; height: 200px;
+    background: radial-gradient(ellipse, rgba(108,99,255,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Language toggle */
+  .lang-toggle {
+    position: absolute;
+    top: 18px; right: 20px;
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .lang-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .lang-btn.active { background: var(--accent); color: #fff; }
+
+  .header-badge {
+    display: inline-block;
+    background: var(--accent-glow);
+    border: 1px solid rgba(108,99,255,0.4);
+    color: var(--accent2);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 99px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .header h1 {
+    font-size: clamp(24px, 5vw, 38px);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .header h1 span {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header p {
+    color: var(--text-muted);
+    font-size: 14px;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 16px 60px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px;
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 11px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--surface2); }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 14px rgba(108,99,255,0.3);
+  }
+
+  /* Form Card */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    margin-bottom: 20px;
+  }
+  .form-card h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .form-card h2::before {
+    content: '';
+    width: 3px; height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .field label .req { color: var(--accent2); margin-left: 2px; }
+
+  .field input,
+  .field textarea,
+  .field select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+  .field input:focus,
+  .field textarea:focus,
+  .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+  .field select option { background: #1a1d27; }
+
+  /* Slider */
+  .slider-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%; height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    outline: none; padding: 0; border: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(108,99,255,0.5);
+  }
+
+  /* Checkboxes */
+  .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .checkbox-item:hover { border-color: var(--accent); color: var(--text); }
+  .checkbox-item input { display: none; }
+  .checkbox-item.checked {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent2);
+  }
+  .check-box {
+    width: 15px; height: 15px;
+    border: 2px solid currentColor;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Generate button */
+  .btn-generate {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+    box-shadow: 0 4px 20px rgba(108,99,255,0.28);
+    margin-bottom: 24px;
+  }
+  .btn-generate:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 28px rgba(108,99,255,0.42);
+  }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+  /* Output */
+  .output-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: none;
+  }
+  .output-card.visible { display: block; }
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .output-header h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px rgba(34,197,94,0.5);
+  }
+  .btn-copy {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-copy:hover { border-color: var(--accent); color: var(--accent2); }
+  .btn-copy.copied { border-color: var(--green); color: var(--green); }
+
+  .output-text {
+    padding: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 120px;
+  }
+
+  .loading-bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+    display: none;
+  }
+  .loading-bar.active { display: block; }
+  @keyframes shimmer {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
+  }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 2px; height: 1em;
+    background: var(--accent2);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 0.8s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .hint-text { color: var(--text-dim); font-family: inherit; font-size: 13px; }
+
+  .error-msg {
+    background: #2d1515;
+    border-bottom: 1px solid #7f1d1d;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: #fca5a5;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .full { grid-column: 1; }
+    .tabs { flex-direction: column; }
+    .lang-toggle { top: 14px; right: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="btn-th" onclick="setLang('th')">TH</button>
+    <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+  </div>
+  <div class="header-badge" id="badge-text">ฟรี — ไม่ต้องสมัครสมาชิก</div>
+  <h1 id="header-title">สร้าง <span>Prompt AI</span> ภาษาไทย</h1>
+  <p id="header-sub">สร้าง prompt คุณภาพสูงสำหรับ AI ทั้งข้อความ รูปภาพ และวิดีโอ — กรอกข้อมูล แล้วได้ prompt พร้อมใช้ทันที</p>
+</div>
+
+<div class="container">
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" onclick="switchTab('text')" id="tab-text">ข้อความ</button>
+    <button class="tab-btn" onclick="switchTab('image')" id="tab-image">รูปภาพ</button>
+    <button class="tab-btn" onclick="switchTab('video')" id="tab-video">วิดีโอ</button>
+  </div>
+
+  <!-- TEXT -->
+  <div class="tab-panel active" id="panel-text">
+    <div class="form-card">
+      <h2 id="h2-text">ตั้งค่า Prompt สำหรับข้อความ</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label id="lbl-topic">หัวข้อหรือเรื่องที่ต้องการ <span class="req">*</span></label>
+          <input type="text" id="text-topic" placeholder="เช่น การท่องเที่ยวในเชียงใหม่, วิธีทำต้มยำกุ้ง...">
+        </div>
+        <div class="field">
+          <label id="lbl-purpose">จุดประสงค์</label>
+          <select id="text-purpose">
+            <option value="อธิบายหรือสอน" data-en="Explain or teach">อธิบายหรือสอนแนวคิด</option>
+            <option value="เขียนสร้างสรรค์" data-en="Creative writing">เขียนสร้างสรรค์</option>
+            <option value="สรุปข้อมูล" data-en="Summarize">สรุปข้อมูล</option>
+            <option value="วิเคราะห์หรือวิจารณ์" data-en="Analyze or critique">วิเคราะห์หรือวิจารณ์</option>
+            <option value="ระดมความคิด" data-en="Brainstorm">ระดมความคิด</option>
+            <option value="ตอบคำถาม" data-en="Answer a question">ตอบคำถาม</option>
+            <option value="เขียนโค้ด" data-en="Generate code">เขียนโค้ด</option>
+            <option value="อื่นๆ" data-en="Other">อื่นๆ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-tone">น้ำเสียง / โทนการเขียน</label>
+          <select id="text-tone">
+            <option value="กลาง" data-en="Neutral">กลาง</option>
+            <option value="เป็นทางการ" data-en="Formal">เป็นทางการ</option>
+            <option value="ไม่เป็นทางการ" data-en="Informal">ไม่เป็นทางการ</option>
+            <option value="เป็นกันเอง" data-en="Friendly">เป็นกันเอง</option>
+            <option value="มืออาชีพ" data-en="Professional">มืออาชีพ</option>
+            <option value="วิชาการ" data-en="Academic">วิชาการ</option>
+            <option value="โน้มน้าว" data-en="Persuasive">โน้มน้าว</option>
+            <option value="ตลกขบขัน" data-en="Humorous">ตลกขบขัน</option>
+            <option value="กระตือรือร้น" data-en="Enthusiastic">กระตือรือร้น</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-format">รูปแบบผลลัพธ์</label>
+          <select id="text-format">
+            <option value="ย่อหน้า" data-en="Paragraphs">ย่อหน้า</option>
+            <option value="หัวข้อย่อย" data-en="Bullet points">หัวข้อย่อย</option>
+            <option value="รายการตัวเลข" data-en="Numbered list">รายการตัวเลข</option>
+            <option value="โครงร่าง" data-en="Outline">โครงร่าง</option>
+            <option value="เรียงความ" data-en="Essay">เรียงความ</option>
+            <option value="เรื่องสั้น" data-en="Story">เรื่องสั้น</option>
+            <option value="โค้ด" data-en="Code">โค้ด</option>
+            <option value="JSON" data-en="JSON">JSON</option>
+            <option value="ตาราง" data-en="Table">ตาราง</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label id="lbl-length">ความยาว</label>
+          <div class="slider-wrap">
+            <input type="range" id="text-length" min="1" max="3" value="2" step="1">
+            <div class="slider-labels">
+              <span id="sl-short">สั้น</span>
+              <span id="sl-mid">กลาง</span>
+              <span id="sl-long">ยาว</span>
+            </div>
+          </div>
+        </div>
+        <div class="field full">
+          <label id="lbl-details">รายละเอียดเพิ่มเติม</label>
+          <textarea id="text-details" placeholder="ระบุรายละเอียดเพิ่มเติม เช่น กลุ่มผู้อ่าน หรือข้อกำหนดพิเศษ..."></textarea>
+        </div>
+        <div class="field full">
+          <label id="lbl-options">ตัวเลือกเพิ่มเติม</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item" onclick="toggleCheck(this)">
+              <input type="checkbox" id="text-examples">
+              <span class="check-box"></span>
+              <span id="chk-examples">ใส่ตัวอย่าง</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)">
+              <input type="checkbox" id="text-citations">
+              <span class="check-box"></span>
+              <span id="chk-citations">อ้างอิงแหล่งข้อมูล</span>
+            </label>
+            <label class="checkbox-item" onclick="toggleCheck(this)">
+              <input type="checkbox" id="text-explain">
+              <span class="check-box"></span>
+              <span id="chk-explain">อธิบายขั้นตอน</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMAGE -->
+  <div class="tab-panel" id="panel-image">
+    <div class="form-card">
+      <h2 id="h2-image">ตั้งค่า Prompt สำหรับรูปภาพ</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label id="lbl-img-subject">วัตถุหรือฉากหลัก <span class="req">*</span></label>
+          <input type="text" id="img-subject" placeholder="เช่น แมวนอนอยู่บนหลังคาบ้านในยามพระอาทิตย์ตก...">
+        </div>
+        <div class="field">
+          <label id="lbl-img-style">สไตล์ศิลปะ</label>
+          <select id="img-style">
+            <option value="" data-en="">ไม่ระบุ</option>
+            <option value="สมจริง" data-en="Realistic">สมจริง</option>
+            <option value="ถ่ายภาพ" data-en="Photographic">ถ่ายภาพ</option>
+            <option value="การ์ตูน" data-en="Cartoon">การ์ตูน</option>
+            <option value="อนิเมะ" data-en="Anime">อนิเมะ</option>
+            <option value="ดิจิทัลอาร์ต" data-en="Digital Art">ดิจิทัลอาร์ต</option>
+            <option value="จิตรกรรมน้ำมัน" data-en="Oil Painting">จิตรกรรมน้ำมัน</option>
+            <option value="สีน้ำ" data-en="Watercolor">สีน้ำ</option>
+            <option value="ร่างดินสอ" data-en="Sketch">ร่างดินสอ</option>
+            <option value="3D เรนเดอร์" data-en="3D Render">3D เรนเดอร์</option>
+            <option value="พิกเซลอาร์ต" data-en="Pixel Art">พิกเซลอาร์ต</option>
+            <option value="มินิมอล" data-en="Minimalist">มินิมอล</option>
+            <option value="เซอร์เรียลลิสม์" data-en="Surrealism">เซอร์เรียลลิสม์</option>
+            <option value="นามธรรม" data-en="Abstract">นามธรรม</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-img-lighting">แสง</label>
+          <select id="img-lighting">
+            <option value="" data-en="">ไม่ระบุ</option>
+            <option value="แสงธรรมชาติ" data-en="Natural lighting">แสงธรรมชาติ</option>
+            <option value="แสงนุ่ม" data-en="Soft lighting">แสงนุ่ม</option>
+            <option value="แสงแรง" data-en="Harsh lighting">แสงแรง</option>
+            <option value="แสงดราม่า" data-en="Dramatic lighting">แสงดราม่า</option>
+            <option value="แสงพระอาทิตย์ตก" data-en="Golden hour">แสงพระอาทิตย์ตก</option>
+            <option value="แสงกลางคืน" data-en="Night/Dark">แสงกลางคืน</option>
+            <option value="แสงนีออน" data-en="Neon lighting">แสงนีออน</option>
+            <option value="แสงสตูดิโอ" data-en="Studio lighting">แสงสตูดิโอ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-img-mood">บรรยากาศ</label>
+          <select id="img-mood">
+            <option value="" data-en="">ไม่ระบุ</option>
+            <option value="สงบ" data-en="Peaceful">สงบ</option>
+            <option value="มีความสุข" data-en="Happy">มีความสุข</option>
+            <option value="ลึกลับ" data-en="Mysterious">ลึกลับ</option>
+            <option value="ตึงเครียด" data-en="Tense">ตึงเครียด</option>
+            <option value="หม่นเศร้า" data-en="Melancholic">หม่นเศร้า</option>
+            <option value="โรแมนติก" data-en="Romantic">โรแมนติก</option>
+            <option value="เหนือจริง" data-en="Ethereal">เหนือจริง</option>
+            <option value="ถวิลหาอดีต" data-en="Nostalgic">ถวิลหาอดีต</option>
+            <option value="อนาคต" data-en="Futuristic">อนาคต</option>
+            <option value="หายนะ" data-en="Dystopian">หายนะ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-img-perspective">มุมมอง</label>
+          <select id="img-perspective">
+            <option value="" data-en="">ไม่ระบุ</option>
+            <option value="ด้านหน้า" data-en="Front view">ด้านหน้า</option>
+            <option value="ด้านข้าง" data-en="Side view">ด้านข้าง</option>
+            <option value="มุมสูง" data-en="Aerial/Top-down">มุมสูง</option>
+            <option value="ไอโซเมตริก" data-en="Isometric">ไอโซเมตริก</option>
+            <option value="ระยะใกล้" data-en="Close-up">ระยะใกล้</option>
+            <option value="มุมกว้าง" data-en="Wide angle">มุมกว้าง</option>
+            <option value="ภาพบุคคล" data-en="Portrait">ภาพบุคคล</option>
+            <option value="ภาพทิวทัศน์" data-en="Landscape">ภาพทิวทัศน์</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-img-ratio">สัดส่วนภาพ</label>
+          <select id="img-ratio">
+            <option value="4:3">4:3</option>
+            <option value="16:9">16:9</option>
+            <option value="1:1">1:1</option>
+            <option value="3:4">3:4</option>
+            <option value="9:16">9:16</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label id="lbl-img-setting">สถานที่ / ฉากหลัง</label>
+          <input type="text" id="img-setting" placeholder="เช่น สวนดอกไม้ญี่ปุ่น, ท้องทะเลทราย, ห้องใต้หลังคาในกรุงปารีส...">
+        </div>
+        <div class="field full">
+          <label id="lbl-img-details">รายละเอียดเพิ่มเติม</label>
+          <textarea id="img-details" placeholder="สีพาเลตที่ต้องการ, วัตถุเพิ่มเติม, หรือรายละเอียดพิเศษอื่นๆ..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIDEO -->
+  <div class="tab-panel" id="panel-video">
+    <div class="form-card">
+      <h2 id="h2-video">ตั้งค่า Prompt สำหรับวิดีโอ</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label id="lbl-vid-scene">คำอธิบายฉากหลัก <span class="req">*</span></label>
+          <textarea id="vid-scene" placeholder="เช่น ชายชราเดินอยู่บนชายหาดช่วงพระอาทิตย์ตก คลื่นกระทบทราย..."></textarea>
+        </div>
+        <div class="field">
+          <label id="lbl-vid-camera">การเคลื่อนกล้อง</label>
+          <select id="vid-camera">
+            <option value="กล้องนิ่ง" data-en="Static shot">กล้องนิ่ง</option>
+            <option value="แพนกล้อง" data-en="Panning shot">แพนกล้อง</option>
+            <option value="ก้มเงยกล้อง" data-en="Tilting shot">ก้มเงยกล้อง</option>
+            <option value="ติดตามวัตถุ" data-en="Tracking shot">ติดตามวัตถุ</option>
+            <option value="ดอลลี่" data-en="Dolly shot">ดอลลี่</option>
+            <option value="ซูมเข้า/ออก" data-en="Zoom shot">ซูมเข้า/ออก</option>
+            <option value="มุมสูงจากอากาศ" data-en="Aerial shot">มุมสูงจากอากาศ</option>
+            <option value="หมุนรอบวัตถุ" data-en="Orbital shot">หมุนรอบวัตถุ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-vid-style">สไตล์ภาพ</label>
+          <select id="vid-style">
+            <option value="สมจริง" data-en="Realistic">สมจริง</option>
+            <option value="ซีนีมาติก" data-en="Cinematic">ซีนีมาติก</option>
+            <option value="แอนิเมชัน" data-en="Animation">แอนิเมชัน</option>
+            <option value="3D แอนิเมชัน" data-en="3D Animation">3D แอนิเมชัน</option>
+            <option value="สต็อปโมชัน" data-en="Stop Motion">สต็อปโมชัน</option>
+            <option value="วาดด้วยมือ" data-en="Hand-drawn">วาดด้วยมือ</option>
+            <option value="สารคดี" data-en="Documentary">สารคดี</option>
+            <option value="ย้อนยุค" data-en="Vintage/Film">ย้อนยุค</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-vid-lighting">แสง</label>
+          <select id="vid-lighting">
+            <option value="" data-en="">ไม่ระบุ</option>
+            <option value="แสงธรรมชาติ" data-en="Natural lighting">แสงธรรมชาติ</option>
+            <option value="แสงนุ่ม" data-en="Soft lighting">แสงนุ่ม</option>
+            <option value="แสงดราม่า" data-en="Dramatic lighting">แสงดราม่า</option>
+            <option value="แสงพระอาทิตย์ตก" data-en="Golden hour">แสงพระอาทิตย์ตก</option>
+            <option value="แสงกลางคืน" data-en="Night/Dark">แสงกลางคืน</option>
+            <option value="แสงนีออน" data-en="Neon lighting">แสงนีออน</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-vid-mood">บรรยากาศ</label>
+          <select id="vid-mood">
+            <option value="" data-en="">ไม่ระบุ</option>
+            <option value="สงบ" data-en="Peaceful">สงบ</option>
+            <option value="ตึงเครียด" data-en="Tense">ตึงเครียด</option>
+            <option value="สนุกสนาน" data-en="Upbeat">สนุกสนาน</option>
+            <option value="เศร้า" data-en="Melancholic">เศร้า</option>
+            <option value="ลึกลับ" data-en="Mysterious">ลึกลับ</option>
+            <option value="ดราม่า" data-en="Dramatic">ดราม่า</option>
+            <option value="เหนือจริง" data-en="Surreal">เหนือจริง</option>
+            <option value="อนาคต" data-en="Futuristic">อนาคต</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-vid-ratio">สัดส่วน</label>
+          <select id="vid-ratio">
+            <option value="16:9">16:9</option>
+            <option value="9:16">9:16</option>
+            <option value="1:1">1:1</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label id="lbl-vid-action">การเคลื่อนไหวในฉาก</label>
+          <input type="text" id="vid-action" placeholder="เช่น ใบไม้ปลิวในสายลม, ฝนตกกระทบกระจก...">
+        </div>
+        <div class="field full">
+          <label id="lbl-vid-details">รายละเอียดเพิ่มเติม</label>
+          <textarea id="vid-details" placeholder="ระบุรายละเอียดอื่นๆ เช่น ความยาวคลิป, เสียงประกอบ..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-generate" id="btn-gen" onclick="generatePrompt()">
+    <span id="btn-text">สร้าง Prompt</span>
+  </button>
+
+  <div class="output-card" id="output-card">
+    <div class="loading-bar" id="loading-bar"></div>
+    <div class="output-header">
+      <h3><span class="dot"></span> <span id="output-label">Prompt ที่สร้าง</span></h3>
+      <button class="btn-copy" id="btn-copy" onclick="copyPrompt()">
+        <span id="copy-text">คัดลอก</span>
+      </button>
+    </div>
+    <div class="error-msg" id="error-msg"></div>
+    <div class="output-text" id="output-text">
+      <span class="hint-text" id="hint-text">Prompt ของคุณจะปรากฏที่นี่</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let currentTab = 'text';
+let currentLang = 'th';
+
+const T = {
+  th: {
+    badge: 'ฟรี — ไม่ต้องสมัครสมาชิก',
+    title: 'สร้าง <span>Prompt AI</span> ภาษาไทย',
+    sub: 'สร้าง prompt คุณภาพสูงสำหรับ AI ทั้งข้อความ รูปภาพ และวิดีโอ — กรอกข้อมูล แล้วได้ prompt พร้อมใช้ทันที',
+    tabText: 'ข้อความ', tabImage: 'รูปภาพ', tabVideo: 'วิดีโอ',
+    h2Text: 'ตั้งค่า Prompt สำหรับข้อความ',
+    h2Image: 'ตั้งค่า Prompt สำหรับรูปภาพ',
+    h2Video: 'ตั้งค่า Prompt สำหรับวิดีโอ',
+    lblTopic: 'หัวข้อหรือเรื่องที่ต้องการ', lblPurpose: 'จุดประสงค์',
+    lblTone: 'น้ำเสียง / โทนการเขียน', lblFormat: 'รูปแบบผลลัพธ์',
+    lblLength: 'ความยาว', lblDetails: 'รายละเอียดเพิ่มเติม',
+    lblOptions: 'ตัวเลือกเพิ่มเติม',
+    slShort: 'สั้น', slMid: 'กลาง', slLong: 'ยาว',
+    chkExamples: 'ใส่ตัวอย่าง', chkCitations: 'อ้างอิงแหล่งข้อมูล', chkExplain: 'อธิบายขั้นตอน',
+    lblImgSubject: 'วัตถุหรือฉากหลัก', lblImgStyle: 'สไตล์ศิลปะ',
+    lblImgLighting: 'แสง', lblImgMood: 'บรรยากาศ',
+    lblImgPerspective: 'มุมมอง', lblImgRatio: 'สัดส่วนภาพ',
+    lblImgSetting: 'สถานที่ / ฉากหลัง', lblImgDetails: 'รายละเอียดเพิ่มเติม',
+    lblVidScene: 'คำอธิบายฉากหลัก', lblVidCamera: 'การเคลื่อนกล้อง',
+    lblVidStyle: 'สไตล์ภาพ', lblVidLighting: 'แสง',
+    lblVidMood: 'บรรยากาศ', lblVidRatio: 'สัดส่วน',
+    lblVidAction: 'การเคลื่อนไหวในฉาก', lblVidDetails: 'รายละเอียดเพิ่มเติม',
+    btnGen: 'สร้าง Prompt', btnGenLoading: 'กำลังสร้าง...',
+    outputLabel: 'Prompt ที่สร้าง', copyBtn: 'คัดลอก', copiedBtn: 'คัดลอกแล้ว',
+    hint: 'Prompt ของคุณจะปรากฏที่นี่',
+    alertRequired: 'กรุณากรอกข้อมูลที่จำเป็นก่อน (ช่องที่มีเครื่องหมาย *)',
+    loading: 'กำลังสร้าง prompt ให้คุณ...',
+    errPrefix: 'เกิดข้อผิดพลาด: ',
+    topicPh: 'เช่น การท่องเที่ยวในเชียงใหม่, วิธีทำต้มยำกุ้ง...',
+    detailsPh: 'ระบุรายละเอียดเพิ่มเติม เช่น กลุ่มผู้อ่าน หรือข้อกำหนดพิเศษ...',
+    imgSubjectPh: 'เช่น แมวนอนอยู่บนหลังคาบ้านในยามพระอาทิตย์ตก...',
+    imgSettingPh: 'เช่น สวนดอกไม้ญี่ปุ่น, ท้องทะเลทราย, ห้องใต้หลังคาในกรุงปารีส...',
+    imgDetailsPh: 'สีพาเลตที่ต้องการ, วัตถุเพิ่มเติม, หรือรายละเอียดพิเศษอื่นๆ...',
+    vidScenePh: 'เช่น ชายชราเดินอยู่บนชายหาดช่วงพระอาทิตย์ตก คลื่นกระทบทราย...',
+    vidActionPh: 'เช่น ใบไม้ปลิวในสายลม, ฝนตกกระทบกระจก...',
+    vidDetailsPh: 'ระบุรายละเอียดอื่นๆ เช่น ความยาวคลิป, เสียงประกอบ...',
+    notSpecified: 'ไม่ระบุ'
+  },
+  en: {
+    badge: 'Free — No Sign Up Required',
+    title: '<span>AI Prompt</span> Generator',
+    sub: 'Generate high-quality prompts for text, image, and video AI — fill in the details, get a ready-to-use prompt instantly.',
+    tabText: 'Text', tabImage: 'Image', tabVideo: 'Video',
+    h2Text: 'Text Generation Settings',
+    h2Image: 'Image Generation Settings',
+    h2Video: 'Video Generation Settings',
+    lblTopic: 'Topic or Subject', lblPurpose: 'Purpose',
+    lblTone: 'Tone', lblFormat: 'Output Format',
+    lblLength: 'Length', lblDetails: 'Additional Details',
+    lblOptions: 'Extra Options',
+    slShort: 'Brief', slMid: 'Medium', slLong: 'Detailed',
+    chkExamples: 'Include examples', chkCitations: 'Include citations', chkExplain: 'Explain steps',
+    lblImgSubject: 'Main Subject', lblImgStyle: 'Art Style',
+    lblImgLighting: 'Lighting', lblImgMood: 'Mood / Atmosphere',
+    lblImgPerspective: 'Perspective', lblImgRatio: 'Aspect Ratio',
+    lblImgSetting: 'Setting / Background', lblImgDetails: 'Additional Details',
+    lblVidScene: 'Scene Description', lblVidCamera: 'Camera Movement',
+    lblVidStyle: 'Visual Style', lblVidLighting: 'Lighting',
+    lblVidMood: 'Mood / Atmosphere', lblVidRatio: 'Aspect Ratio',
+    lblVidAction: 'Action / Movement', lblVidDetails: 'Additional Details',
+    btnGen: 'Generate Prompt', btnGenLoading: 'Generating...',
+    outputLabel: 'Generated Prompt', copyBtn: 'Copy', copiedBtn: 'Copied!',
+    hint: 'Your prompt will appear here',
+    alertRequired: 'Please fill in the required field (marked with *)',
+    loading: 'Generating your prompt...',
+    errPrefix: 'Error: ',
+    topicPh: 'e.g. Climate change, How to make pizza...',
+    detailsPh: 'Target audience, special requirements, additional context...',
+    imgSubjectPh: 'e.g. A cat sleeping on a rooftop at sunset...',
+    imgSettingPh: 'e.g. Japanese flower garden, desert, Parisian attic...',
+    imgDetailsPh: 'Color palette, additional objects, or special details...',
+    vidScenePh: 'e.g. An elderly man walking on a beach at golden hour, waves lapping...',
+    vidActionPh: 'e.g. Leaves blowing in the wind, rain on glass...',
+    vidDetailsPh: 'Clip duration, sound design, or anything to emphasize...',
+    notSpecified: 'Not specified'
+  }
+};
+
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('btn-th').classList.toggle('active', lang === 'th');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.body.classList.toggle('lang-en', lang === 'en');
+
+  const t = T[lang];
+  document.getElementById('badge-text').textContent = t.badge;
+  document.getElementById('header-title').innerHTML = t.title;
+  document.getElementById('header-sub').textContent = t.sub;
+  document.getElementById('tab-text').textContent = t.tabText;
+  document.getElementById('tab-image').textContent = t.tabImage;
+  document.getElementById('tab-video').textContent = t.tabVideo;
+  document.getElementById('h2-text').innerHTML = '<span style="width:3px;height:14px;background:var(--accent);border-radius:2px;display:inline-block;margin-right:10px;flex-shrink:0"></span>' + t.h2Text;
+  document.getElementById('h2-image').innerHTML = '<span style="width:3px;height:14px;background:var(--accent);border-radius:2px;display:inline-block;margin-right:10px;flex-shrink:0"></span>' + t.h2Image;
+  document.getElementById('h2-video').innerHTML = '<span style="width:3px;height:14px;background:var(--accent);border-radius:2px;display:inline-block;margin-right:10px;flex-shrink:0"></span>' + t.h2Video;
+
+  // Labels
+  document.getElementById('lbl-topic').innerHTML = t.lblTopic + ' <span class="req">*</span>';
+  document.getElementById('lbl-purpose').textContent = t.lblPurpose;
+  document.getElementById('lbl-tone').textContent = t.lblTone;
+  document.getElementById('lbl-format').textContent = t.lblFormat;
+  document.getElementById('lbl-length').textContent = t.lblLength;
+  document.getElementById('lbl-details').textContent = t.lblDetails;
+  document.getElementById('lbl-options').textContent = t.lblOptions;
+  document.getElementById('sl-short').textContent = t.slShort;
+  document.getElementById('sl-mid').textContent = t.slMid;
+  document.getElementById('sl-long').textContent = t.slLong;
+  document.getElementById('chk-examples').textContent = t.chkExamples;
+  document.getElementById('chk-citations').textContent = t.chkCitations;
+  document.getElementById('chk-explain').textContent = t.chkExplain;
+  document.getElementById('lbl-img-subject').innerHTML = t.lblImgSubject + ' <span class="req">*</span>';
+  document.getElementById('lbl-img-style').textContent = t.lblImgStyle;
+  document.getElementById('lbl-img-lighting').textContent = t.lblImgLighting;
+  document.getElementById('lbl-img-mood').textContent = t.lblImgMood;
+  document.getElementById('lbl-img-perspective').textContent = t.lblImgPerspective;
+  document.getElementById('lbl-img-ratio').textContent = t.lblImgRatio;
+  document.getElementById('lbl-img-setting').textContent = t.lblImgSetting;
+  document.getElementById('lbl-img-details').textContent = t.lblImgDetails;
+  document.getElementById('lbl-vid-scene').innerHTML = t.lblVidScene + ' <span class="req">*</span>';
+  document.getElementById('lbl-vid-camera').textContent = t.lblVidCamera;
+  document.getElementById('lbl-vid-style').textContent = t.lblVidStyle;
+  document.getElementById('lbl-vid-lighting').textContent = t.lblVidLighting;
+  document.getElementById('lbl-vid-mood').textContent = t.lblVidMood;
+  document.getElementById('lbl-vid-ratio').textContent = t.lblVidRatio;
+  document.getElementById('lbl-vid-action').textContent = t.lblVidAction;
+  document.getElementById('lbl-vid-details').textContent = t.lblVidDetails;
+
+  // Placeholders
+  document.getElementById('text-topic').placeholder = t.topicPh;
+  document.getElementById('text-details').placeholder = t.detailsPh;
+  document.getElementById('img-subject').placeholder = t.imgSubjectPh;
+  document.getElementById('img-setting').placeholder = t.imgSettingPh;
+  document.getElementById('img-details').placeholder = t.imgDetailsPh;
+  document.getElementById('vid-scene').placeholder = t.vidScenePh;
+  document.getElementById('vid-action').placeholder = t.vidActionPh;
+  document.getElementById('vid-details').placeholder = t.vidDetailsPh;
+
+  // Select options with data-en
+  document.querySelectorAll('select option[data-en]').forEach(opt => {
+    if (lang === 'en') {
+      opt.textContent = opt.getAttribute('data-en') || t.notSpecified;
+    } else {
+      opt.textContent = opt.getAttribute('data-th') || opt.textContent;
+    }
+  });
+
+  // Rebuild select options using stored original TH text
+  if (lang === 'en') {
+    document.querySelectorAll('select option').forEach(opt => {
+      if (!opt.getAttribute('data-th')) opt.setAttribute('data-th', opt.textContent);
+      const en = opt.getAttribute('data-en');
+      if (en !== null) opt.textContent = en || t.notSpecified;
+    });
+  } else {
+    document.querySelectorAll('select option[data-th]').forEach(opt => {
+      opt.textContent = opt.getAttribute('data-th');
+    });
+  }
+
+  document.getElementById('btn-text').textContent = t.btnGen;
+  document.getElementById('output-label').textContent = t.outputLabel;
+  document.getElementById('copy-text').textContent = t.copyBtn;
+  document.getElementById('hint-text').textContent = t.hint;
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+function toggleCheck(label) {
+  label.classList.toggle('checked');
+  const cb = label.querySelector('input[type=checkbox]');
+  cb.checked = !cb.checked;
+  label.querySelector('.check-box').textContent = cb.checked ? '✓' : '';
+}
+
+function getLengthLabel(val) {
+  const t = T[currentLang];
+  return val == 1 ? t.slShort : val == 3 ? t.slLong : t.slMid;
+}
+
+function getRequiredField() {
+  if (currentTab === 'text') return document.getElementById('text-topic').value.trim();
+  if (currentTab === 'image') return document.getElementById('img-subject').value.trim();
+  if (currentTab === 'video') return document.getElementById('vid-scene').value.trim();
+}
+
+function buildUserMessage() {
+  if (currentTab === 'text') {
+    const topic = document.getElementById('text-topic').value.trim();
+    const purpose = document.getElementById('text-purpose').value;
+    const tone = document.getElementById('text-tone').value;
+    const format = document.getElementById('text-format').value;
+    const length = getLengthLabel(document.getElementById('text-length').value);
+    const details = document.getElementById('text-details').value.trim();
+    const useExamples = document.getElementById('text-examples').checked;
+    const useCitations = document.getElementById('text-citations').checked;
+    const useExplain = document.getElementById('text-explain').checked;
+    let extras = [];
+    if (useExamples) extras.push(currentLang === 'th' ? 'ใส่ตัวอย่างประกอบ' : 'Include examples');
+    if (useCitations) extras.push(currentLang === 'th' ? 'อ้างอิงแหล่งข้อมูล' : 'Include citations');
+    if (useExplain) extras.push(currentLang === 'th' ? 'อธิบายขั้นตอนอย่างละเอียด' : 'Explain steps in detail');
+    if (currentLang === 'th') {
+      return `สร้าง prompt สำหรับ AI (ChatGPT / Claude / Gemini) เพื่อสร้างข้อความ:
+- หัวข้อ: ${topic}
+- จุดประสงค์: ${purpose}
+- น้ำเสียง: ${tone}
+- รูปแบบ: ${format}
+- ความยาว: ${length}
+${details ? `- รายละเอียดเพิ่มเติม: ${details}` : ''}
+${extras.length ? `- พิเศษ: ${extras.join(', ')}` : ''}
+สร้าง prompt ที่สมบูรณ์พร้อมใช้งานทันที ตอบเป็น prompt เท่านั้น`;
+    } else {
+      return `Create a high-quality AI prompt (for ChatGPT / Claude / Gemini) for text generation:
+- Topic: ${topic}
+- Purpose: ${purpose}
+- Tone: ${tone}
+- Output format: ${format}
+- Length: ${length}
+${details ? `- Additional details: ${details}` : ''}
+${extras.length ? `- Extra options: ${extras.join(', ')}` : ''}
+Return only the prompt, no explanation.`;
+    }
+  }
+  if (currentTab === 'image') {
+    const subject = document.getElementById('img-subject').value.trim();
+    const style = document.getElementById('img-style').value;
+    const lighting = document.getElementById('img-lighting').value;
+    const mood = document.getElementById('img-mood').value;
+    const perspective = document.getElementById('img-perspective').value;
+    const ratio = document.getElementById('img-ratio').value;
+    const setting = document.getElementById('img-setting').value.trim();
+    const details = document.getElementById('img-details').value.trim();
+    if (currentLang === 'th') {
+      return `สร้าง prompt ภาษาอังกฤษสำหรับ AI สร้างภาพ (Midjourney / DALL-E / Stable Diffusion):
+- วัตถุหลัก: ${subject}
+${style ? `- สไตล์: ${style}` : ''}${setting ? `\n- ฉากหลัง: ${setting}` : ''}${lighting ? `\n- แสง: ${lighting}` : ''}${mood ? `\n- บรรยากาศ: ${mood}` : ''}${perspective ? `\n- มุมมอง: ${perspective}` : ''}
+- สัดส่วน: ${ratio}
+${details ? `- รายละเอียด: ${details}` : ''}
+ตอบเป็น prompt ภาษาอังกฤษเท่านั้น พร้อมใช้งานได้ทันที`;
+    } else {
+      return `Create an English image generation prompt for Midjourney / DALL-E / Stable Diffusion:
+- Main subject: ${subject}
+${style ? `- Art style: ${style}` : ''}${setting ? `\n- Setting: ${setting}` : ''}${lighting ? `\n- Lighting: ${lighting}` : ''}${mood ? `\n- Mood: ${mood}` : ''}${perspective ? `\n- Perspective: ${perspective}` : ''}
+- Aspect ratio: ${ratio}
+${details ? `- Details: ${details}` : ''}
+Return only the prompt, ready to use.`;
+    }
+  }
+  if (currentTab === 'video') {
+    const scene = document.getElementById('vid-scene').value.trim();
+    const camera = document.getElementById('vid-camera').value;
+    const style = document.getElementById('vid-style').value;
+    const lighting = document.getElementById('vid-lighting').value;
+    const mood = document.getElementById('vid-mood').value;
+    const ratio = document.getElementById('vid-ratio').value;
+    const action = document.getElementById('vid-action').value.trim();
+    const details = document.getElementById('vid-details').value.trim();
+    if (currentLang === 'th') {
+      return `สร้าง prompt ภาษาอังกฤษสำหรับ AI สร้างวิดีโอ (Runway / Pika / Sora):
+- ฉาก: ${scene}
+- กล้อง: ${camera}
+- สไตล์: ${style}
+${lighting ? `- แสง: ${lighting}` : ''}${mood ? `\n- บรรยากาศ: ${mood}` : ''}
+- สัดส่วน: ${ratio}
+${action ? `- การเคลื่อนไหว: ${action}` : ''}${details ? `\n- รายละเอียด: ${details}` : ''}
+ตอบเป็น prompt ภาษาอังกฤษเท่านั้น`;
+    } else {
+      return `Create an English video generation prompt for Runway / Pika / Sora:
+- Scene: ${scene}
+- Camera: ${camera}
+- Visual style: ${style}
+${lighting ? `- Lighting: ${lighting}` : ''}${mood ? `\n- Mood: ${mood}` : ''}
+- Aspect ratio: ${ratio}
+${action ? `- Action/movement: ${action}` : ''}${details ? `\n- Details: ${details}` : ''}
+Return only the prompt.`;
+    }
+  }
+}
+
+async function generatePrompt() {
+  const t = T[currentLang];
+  if (!getRequiredField()) { alert(t.alertRequired); return; }
+
+  const btn = document.getElementById('btn-gen');
+  const btnText = document.getElementById('btn-text');
+  const outputCard = document.getElementById('output-card');
+  const outputText = document.getElementById('output-text');
+  const loadingBar = document.getElementById('loading-bar');
+  const errorMsg = document.getElementById('error-msg');
+
+  btn.disabled = true;
+  btnText.textContent = t.btnGenLoading;
+  outputCard.classList.add('visible');
+  loadingBar.classList.add('active');
+  errorMsg.classList.remove('visible');
+  outputText.innerHTML = `<span style="color:var(--text-muted)">${t.loading}</span><span class="cursor-blink"></span>`;
+
+  const systemPrompt = currentLang === 'th'
+    ? 'คุณเป็นผู้เชี่ยวชาญด้านการสร้าง AI prompt คุณภาพสูง สร้าง prompt ที่ชัดเจนและพร้อมใช้งานทันที ตอบเป็น prompt เท่านั้น ห้ามอธิบายเพิ่ม'
+    : 'You are an expert AI prompt engineer. Generate clear, detailed, ready-to-use prompts. Return only the prompt, no explanations or preamble.';
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: buildUserMessage() }]
+      })
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    const result = data.content?.map(i => i.text || '').join('') || '';
+
+    outputText.textContent = '';
+    let i = 0;
+    function typeWriter() {
+      if (i < result.length) {
+        outputText.textContent += result[i++];
+        setTimeout(typeWriter, 8);
+      } else {
+        loadingBar.classList.remove('active');
+      }
+    }
+    typeWriter();
+  } catch (err) {
+    loadingBar.classList.remove('active');
+    errorMsg.textContent = t.errPrefix + err.message;
+    errorMsg.classList.add('visible');
+    outputText.innerHTML = '';
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = t.btnGen;
+  }
+}
+
+function copyPrompt() {
+  const t = T[currentLang];
+  const text = document.getElementById('output-text').textContent;
+  if (!text || text === t.hint || text.includes(t.loading.slice(0, 10))) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy');
+    const txt = document.getElementById('copy-text');
+    btn.classList.add('copied');
+    txt.textContent = t.copiedBtn;
+    setTimeout(() => { btn.classList.remove('copied'); txt.textContent = t.copyBtn; }, 2000);
+  });
+}
+
+// Store original TH option text on load
+document.querySelectorAll('select option').forEach(opt => {
+  opt.setAttribute('data-th', opt.textContent);
+});
+</script>
+</body>
+</html>
